@@ -8,16 +8,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install WUT
+      - name: Install Tools
         run: |
-          # Wir stellen sicher, dass dkp-pacman das Tool wirklich holt
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Convert
+      - name: Locate and Convert
         run: |
-          # Wir erzwingen den direkten Pfad, wo devkitpro seine Tools ablegt
-          /opt/devkitpro/wut/bin/wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          # Wir suchen jetzt auf dem ganzen Server nach der Datei
+          TOOL_PATH=$(find / -name "wut-wpsgen" 2>/dev/null | head -n 1)
+          
+          if [ -z "$TOOL_PATH" ]; then
+            echo "Tool wurde nirgendwo gefunden!"
+            exit 1
+          fi
+          
+          echo "Tool gefunden in: $TOOL_PATH"
+          $TOOL_PATH King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
       - name: Upload
         uses: actions/upload-artifact@v4
