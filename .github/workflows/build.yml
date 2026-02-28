@@ -13,19 +13,17 @@ jobs:
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Rename and Convert
+      - name: Repair and Convert
         run: |
-          # Tool finden
-          WPS_TOOL=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
+          # 1. Pfade finden
+          ELF2RPL=$(find /opt/devkitpro -name "elf2rpl" | head -n 1)
+          WPSGEN=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
           
-          # Datei umbenennen um Sonderzeichen-Fehler zu vermeiden
-          cp King-Gamepad-vWii.elf plugin.elf
+          # 2. ELF zu RPL (Das repariert den Header deiner 3,9KB Datei)
+          $ELF2RPL King-Gamepad-vWii.elf King-Gamepad-vWii.rpl || echo "RPL Schritt fehlgeschlagen"
           
-          # Umwandlung erzwingen
-          $WPS_TOOL plugin.elf plugin.wps || echo "Tool meldet Fehler, aber wir schauen ob die Datei da ist"
-          
-          # Ergebnis umbenennen für dich
-          mv plugin.wps King-Gamepad-vWii.wps || echo "Datei wurde nicht erstellt"
+          # 3. RPL zu WPS (Das macht das fertige Plugin)
+          $WPSGEN King-Gamepad-vWii.rpl King-Gamepad-vWii.wps || $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
       - name: Upload Result
         uses: actions/upload-artifact@v4
