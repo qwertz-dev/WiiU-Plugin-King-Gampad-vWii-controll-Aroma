@@ -8,21 +8,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Tools
+      - name: Install WUT
         run: |
+          # Wir stellen sicher, dass dkp-pacman das Tool wirklich holt
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Force Convert
+      - name: Convert
         run: |
-          # Berechtigungen setzen
-          chmod +x King-Gamepad-vWii.elf
+          # Wir erzwingen den direkten Pfad, wo devkitpro seine Tools ablegt
+          /opt/devkitpro/wut/bin/wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
-          # Das Tool finden und direkt ausführen
-          WPS_TOOL=$(find /opt/devkitpro -name "wut-wpsgen")
-          $WPS_TOOL King-Gamepad-vWii.elf King-Gamepad-vWii.wps
-          
-      - name: Upload Result
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: Fertiges-Plugin
