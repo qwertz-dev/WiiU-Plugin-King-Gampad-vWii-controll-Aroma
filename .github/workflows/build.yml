@@ -8,19 +8,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Everything
+      - name: Install Tools
         run: |
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Find and Convert
+      - name: Force Convert
         run: |
-          # Wir suchen die Datei wut-wpsgen überall und speichern den Pfad
-          WPSGEN_PATH=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
-          echo "Tool gefunden unter: $WPSGEN_PATH"
+          # Berechtigungen setzen
+          chmod +x King-Gamepad-vWii.elf
           
-          # Ausführen mit dem gefundenen Pfad
-          $WPSGEN_PATH King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          # Das Tool finden und direkt ausführen
+          WPS_TOOL=$(find /opt/devkitpro -name "wut-wpsgen")
+          $WPS_TOOL King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
       - name: Upload Result
         uses: actions/upload-artifact@v4
