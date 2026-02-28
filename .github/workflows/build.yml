@@ -6,14 +6,19 @@ jobs:
     container: devkitpro/devkitppc:latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
       - name: Install Tools
         run: |
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
-      - name: Convert
-        run: /opt/devkitpro/wut/bin/wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
-      - name: Download
+
+      - name: Convert ELF to WPS
+        run: |
+          # Wir suchen das Tool direkt im System-Pfad
+          wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          
+      - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
           name: Fertiges-Plugin
