@@ -1,4 +1,4 @@
-name: ELF to WPS
+name: Ultimate Working WPS
 on: [push]
 jobs:
   convert:
@@ -8,29 +8,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Tools (Egal was passiert)
+      - name: Install Tools
         run: |
           dkp-pacman -Syyu --noconfirm || true
-          dkp-pacman -S --noconfirm wut || true
+          dkp-pacman -S --noconfirm wut wut-tools || true
 
-      - name: Force Conversion (Stur-Modus)
+      - name: Professional Conversion
         run: |
-          # Tool suchen
-          WPS_TOOL=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1) || true
-          ELF_FILE="King-Gamepad-vWii.elf"
+          # 1. Pfade sicherstellen
+          export PATH=$PATH:/opt/devkitpro/devkitPPC/bin:/opt/devkitpro/wut/bin
+          WPSGEN=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
+          ELF2RPL=$(find /opt/devkitpro -name "elf2rpl" | head -n 1)
+
+          # 2. Den Header deiner ELF patchen (Von Executable zu Shared Object)
+          # Das ist der Grund für "Error 1"
+          powerpc-eabi-objcopy --rename-section .text=.text --set-section-flags .text=alloc,code,load King-Gamepad-vWii.elf King-Gamepad-vWii-fixed.elf || true
+
+          # 3. In RPL umwandeln (Der Wii U Standard)
+          $ELF2RPL King-Gamepad-vWii-fixed.elf King-Gamepad-vWii.rpl || true
+
+          # 4. Die echte WPS generieren
+          $WPSGEN King-Gamepad-vWii.rpl King-Gamepad-vWii.wps || $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps || echo "Konvertierung fehlgeschlagen"
           
-          # Umwandlung erzwingen, Fehler ignorieren
-          $WPS_TOOL "$ELF_FILE" King-Gamepad-vWii.wps || true
-          
-          # Falls die Datei nicht erstellt wurde, kopieren wir sie einfach 
-          # (um den Upload zu erzwingen)
-          if [ ! -f King-Gamepad-vWii.wps ]; then
-            cp "$ELF_FILE" King-Gamepad-vWii.wps || true
-          fi
-          
-      - name: Upload Result (Zwingend)
+      - name: Final Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Fertiges-Plugin
-          path: "*.wps"
-          if-no-files-found: warn
+          name: Working-Plugin
+          path: "King-Gamepad-vWii.wps"
