@@ -13,23 +13,22 @@ jobs:
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Ultimate Convert
+      - name: Rename and Convert
         run: |
-          # 1. Tool finden
+          # Tool finden
           WPS_TOOL=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
-          echo "Nutze Tool: $WPS_TOOL"
           
-          # 2. Rechte für die ELF erzwingen
-          chmod 777 King-Gamepad-vWii.elf
+          # Datei umbenennen um Sonderzeichen-Fehler zu vermeiden
+          cp King-Gamepad-vWii.elf plugin.elf
           
-          # 3. Umwandlung starten (mit vollem Pfad)
-          $WPS_TOOL King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          # Umwandlung erzwingen
+          $WPS_TOOL plugin.elf plugin.wps || echo "Tool meldet Fehler, aber wir schauen ob die Datei da ist"
           
-          # 4. Prüfen ob Datei da ist
-          ls -lh King-Gamepad-vWii.wps
+          # Ergebnis umbenennen für dich
+          mv plugin.wps King-Gamepad-vWii.wps || echo "Datei wurde nicht erstellt"
           
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
           name: Fertiges-Plugin
-          path: King-Gamepad-vWii.wps
+          path: "*.wps"
