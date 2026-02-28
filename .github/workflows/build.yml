@@ -1,4 +1,4 @@
-name: Fix 3.9KB Issue
+name: Build From Scratch
 on: [push]
 jobs:
   build:
@@ -8,36 +8,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Everything
+      - name: Clean and Install
         run: |
-          dkp-pacman -Syyu --noconfirm || true
-          dkp-pacman -S --noconfirm wut wut-tools wut-devel || true
+          # Radikal-Löschung der alten Schrott-Dateien
+          rm -f King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          dkp-pacman -Syyu --noconfirm
+          dkp-pacman -S --noconfirm wut wut-tools wut-devel
 
-      - name: Force New Build
+      - name: Force Rebuild
         run: |
           export PATH=$PATH:/opt/devkitpro/devkitPPC/bin:/opt/devkitpro/wut/bin
           
-          # Wir löschen die alte ELF intern, damit sie nicht versehentlich kopiert wird
-          rm -f King-Gamepad-vWii.wps || true
-          
-          # Echter Kompilier-Befehl für Aroma-Plugins
-          # Wenn das klappt, wird die Datei ca. 10-20 KB groß
-          powerpc-eabi-gcc -O2 -Wall main.c -o King-Gamepad-vWii.elf \
+          # Wir bauen NUR aus der main.c
+          # Wenn hier ein Fehler ist, wird KEINE Datei erstellt (besser als eine kaputte)
+          powerpc-eabi-gcc -O2 main.c -o King-Gamepad-vWii.elf \
             -specs=wiiu-wps.specs -L/opt/devkitpro/wut/lib -lwut \
-            -D_WIIU_ -D_WUT_ -I/opt/devkitpro/wut/include || echo "Kompilieren fehlgeschlagen"
-
-          # Umwandlung
-          WPSGEN=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1) || true
-          $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps || echo "WPS Erstellung fehlgeschlagen"
+            -D_WIIU_ -D_WUT_ -I/opt/devkitpro/wut/include
           
-          # Letzte Rettung: Falls die WPS nicht erstellt wurde, 
-          # schauen wir, ob wir wenigstens eine funktionierende ELF haben
-          if [ ! -f King-Gamepad-vWii.wps ]; then
-            cp King-Gamepad-vWii.elf King-Gamepad-vWii.wps || echo "Keine Datei erzeugt"
-          fi
+          # Konvertierung zu WPS
+          WPSGEN=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
+          $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Echtes-Plugin-Versuch
+          name: Echtes-Plugin
           path: King-Gamepad-vWii.wps
