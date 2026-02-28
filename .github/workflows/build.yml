@@ -15,7 +15,8 @@ jobs:
 
       - name: Convert ELF to WPS
         run: |
-          # Wir suchen das Tool direkt im System-Pfad
+          # Wir erzwingen den Pfad zu den WUT-Tools
+          export PATH=$PATH:/opt/devkitpro/wut/bin
           wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
       - name: Upload Result
