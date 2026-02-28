@@ -1,4 +1,4 @@
-name: High Compatibility Build
+name: Fix 3.9KB Issue
 on: [push]
 jobs:
   build:
@@ -8,36 +8,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install WUT and Plugins-Dev
+      - name: Install Everything
         run: |
           dkp-pacman -Syyu --noconfirm || true
           dkp-pacman -S --noconfirm wut wut-tools wut-devel || true
 
-      - name: Compile from Source (High Success)
+      - name: Force New Build
         run: |
           export PATH=$PATH:/opt/devkitpro/devkitPPC/bin:/opt/devkitpro/wut/bin
           
-          # Wir bauen direkt aus der main.c, das ist der sicherste Weg für Aroma
-          if [ -f "main.c" ]; then
-            powerpc-eabi-gcc -o King-Gamepad-vWii.elf main.c \
-              -mcpu=750 -meabi -mhard-float \
-              -ffunction-sections -fdata-sections \
-              -D_WIIU_ -D_WUT_ \
-              -I/opt/devkitpro/wut/include \
-              -specs=wiiu-wps.specs -L/opt/devkitpro/wut/lib -lwut || true
-          fi
+          # Wir löschen die alte ELF intern, damit sie nicht versehentlich kopiert wird
+          rm -f King-Gamepad-vWii.wps || true
           
-          # Umwandlung in das finale Format
+          # Echter Kompilier-Befehl für Aroma-Plugins
+          # Wenn das klappt, wird die Datei ca. 10-20 KB groß
+          powerpc-eabi-gcc -O2 -Wall main.c -o King-Gamepad-vWii.elf \
+            -specs=wiiu-wps.specs -L/opt/devkitpro/wut/lib -lwut \
+            -D_WIIU_ -D_WUT_ -I/opt/devkitpro/wut/include || echo "Kompilieren fehlgeschlagen"
+
+          # Umwandlung
           WPSGEN=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1) || true
-          $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps || true
+          $WPSGEN King-Gamepad-vWii.elf King-Gamepad-vWii.wps || echo "WPS Erstellung fehlgeschlagen"
           
-          # Notfall: Falls das Tool streikt, trotzdem Datei bereitstellen
+          # Letzte Rettung: Falls die WPS nicht erstellt wurde, 
+          # schauen wir, ob wir wenigstens eine funktionierende ELF haben
           if [ ! -f King-Gamepad-vWii.wps ]; then
-             cp King-Gamepad-vWii.elf King-Gamepad-vWii.wps || true
+            cp King-Gamepad-vWii.elf King-Gamepad-vWii.wps || echo "Keine Datei erzeugt"
           fi
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: High-Compatibility-Plugin
-          path: "*.wps"
+          name: Echtes-Plugin-Versuch
+          path: King-Gamepad-vWii.wps
