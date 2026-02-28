@@ -8,16 +8,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Tools
+      - name: Install Everything
         run: |
           dkp-pacman -Syyu --noconfirm
           dkp-pacman -S --noconfirm wut
 
-      - name: Convert ELF to WPS
+      - name: Find and Convert
         run: |
-          # Wir erzwingen den Pfad zu den WUT-Tools
-          export PATH=$PATH:/opt/devkitpro/wut/bin
-          wut-wpsgen King-Gamepad-vWii.elf King-Gamepad-vWii.wps
+          # Wir suchen die Datei wut-wpsgen überall und speichern den Pfad
+          WPSGEN_PATH=$(find /opt/devkitpro -name "wut-wpsgen" | head -n 1)
+          echo "Tool gefunden unter: $WPSGEN_PATH"
+          
+          # Ausführen mit dem gefundenen Pfad
+          $WPSGEN_PATH King-Gamepad-vWii.elf King-Gamepad-vWii.wps
           
       - name: Upload Result
         uses: actions/upload-artifact@v4
